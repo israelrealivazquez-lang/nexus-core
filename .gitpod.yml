@@ -1,0 +1,18 @@
+image: gitpod/workspace-full
+
+tasks:
+  - name: Nexus Setup
+    init: bash .devcontainer/setup.sh
+    command: echo "Nexus Core activo en Gitpod"
+
+ports:
+  - port: 5678
+    onOpen: ignore
+  - port: 8080
+    onOpen: open-preview
+  - port: 8384
+    onOpen: ignore
+
+vscode:
+  extensions:
+    - ms-python.python

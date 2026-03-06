@@ -1,0 +1,15 @@
+*.exe
+*.msi
+*.zip
+*.tar.gz
+Thumbs.db
+desktop.ini
+.DS_Store
+.env
+*.key
+*.pem
+node_modules/
+__pycache__/
+.cache/
+*.pyc
+logs/*.log
