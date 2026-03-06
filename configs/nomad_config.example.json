@@ -1,0 +1,89 @@
+{
+  "cycle_minutes": 30,
+  "min_migration_gap_minutes": 10,
+  "state_file": "logs/nomad_state.json",
+  "sentinel_provider": "huggingface_spaces",
+  "notification_webhook_url": null,
+  "backup_command": "python scripts/auto_backup.py --once",
+  "restore_command": "python scripts/auto_restore.py",
+  "providers": [
+    {
+      "name": "codespaces",
+      "priority": 1,
+      "enabled": true,
+      "check": {
+        "type": "command",
+        "command": "gh codespace list --limit 1"
+      },
+      "quota": {
+        "hours_env": "CODESPACES_HOURS_LEFT",
+        "min_hours": 5
+      },
+      "migrate_command": "echo migrate_to_codespaces",
+      "verify_command": "echo verify_codespaces"
+    },
+    {
+      "name": "gitpod",
+      "priority": 2,
+      "enabled": true,
+      "check": {
+        "type": "env",
+        "env": "GITPOD_READY"
+      },
+      "quota": {
+        "hours_env": "GITPOD_HOURS_LEFT",
+        "min_hours": 5
+      },
+      "migrate_command": "echo migrate_to_gitpod",
+      "verify_command": "echo verify_gitpod"
+    },
+    {
+      "name": "gcp_vm",
+      "priority": 3,
+      "enabled": true,
+      "check": {
+        "type": "command",
+        "command": "gcloud compute instances list --filter=\"name=('antigravity-nexus-master') AND status=RUNNING\" --format=\"value(name)\""
+      },
+      "quota": {
+        "credit_env": "GCP_CREDIT_LEFT_USD",
+        "min_credit": 20
+      },
+      "migrate_command": "echo migrate_to_gcp_vm",
+      "verify_command": "echo verify_gcp_vm"
+    },
+    {
+      "name": "oracle_arm",
+      "priority": 4,
+      "enabled": true,
+      "check": {
+        "type": "env",
+        "env": "ORACLE_NODE_READY"
+      },
+      "migrate_command": "echo migrate_to_oracle_arm",
+      "verify_command": "echo verify_oracle_arm"
+    },
+    {
+      "name": "cloud_shell",
+      "priority": 5,
+      "enabled": true,
+      "check": {
+        "type": "env",
+        "env": "CLOUD_SHELL_READY"
+      },
+      "migrate_command": "echo migrate_to_cloud_shell",
+      "verify_command": "echo verify_cloud_shell"
+    },
+    {
+      "name": "huggingface_spaces",
+      "priority": 6,
+      "enabled": true,
+      "check": {
+        "type": "url",
+        "url": "https://huggingface.co"
+      },
+      "migrate_command": "echo migrate_to_hf_space_minimal",
+      "verify_command": "echo verify_hf_space"
+    }
+  ]
+}

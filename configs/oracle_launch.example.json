@@ -1,0 +1,21 @@
+{
+  "availabilityDomain": "YOUR_AD_NAME",
+  "compartmentId": "ocid1.compartment.oc1..replace_me",
+  "shape": "VM.Standard.A1.Flex",
+  "shapeConfig": {
+    "ocpus": 4,
+    "memoryInGBs": 24
+  },
+  "displayName": "nexus-oracle-arm",
+  "sourceDetails": {
+    "sourceType": "image",
+    "imageId": "ocid1.image.oc1..replace_me"
+  },
+  "createVnicDetails": {
+    "subnetId": "ocid1.subnet.oc1..replace_me",
+    "assignPublicIp": true
+  },
+  "metadata": {
+    "ssh_authorized_keys": "ssh-rsa AAAA...replace_me"
+  }
+}
