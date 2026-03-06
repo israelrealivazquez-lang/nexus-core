@@ -29,6 +29,12 @@ Base operativa para orquestacion multi-cloud con respaldo continuo:
   - Intento OCI cada 15 min (solo `oci-cli`).
   - Ignora capacidad agotada sin ruido.
   - Notifica por webhook cuando detecta `PROVISIONING/RUNNING`.
+- `scripts/ops_status.ps1`
+  - Diagnostico de disco, bridge/hub, python, toolchain y git.
+- `scripts/safe_space_recovery.ps1`
+  - Recuperacion de espacio segura (caches regenerables, sin cookies/sesiones).
+- `scripts/bootstrap_windows_toolchain.ps1`
+  - Detecta Python util, guarda `NEXUS_PYTHON` y genera `configs/nomad_config.json` local.
 
 ## Setup rapido
 
@@ -80,6 +86,30 @@ Oracle sniper:
 
 ```bash
 python scripts/oracle_sniper.py --once --dry-run
+```
+
+Ops status (Windows):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/ops_status.ps1
+```
+
+Recuperar espacio seguro (Windows):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/safe_space_recovery.ps1 -TargetFreeGb 2
+```
+
+Para forzar OneDrive a "solo en linea" en rutas pesadas:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/safe_space_recovery.ps1 -ForceOneDriveOnlineOnly
+```
+
+Bootstrap toolchain (Windows):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/bootstrap_windows_toolchain.ps1
 ```
 
 ## Seguridad de tokens
