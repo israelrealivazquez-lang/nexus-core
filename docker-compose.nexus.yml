@@ -1,0 +1,39 @@
+services:
+  nexus-sentinel:
+    image: python:3.11-slim
+    working_dir: /app
+    volumes:
+      - ./sentinel:/app
+      - ./logs:/app/logs
+    command: >
+      sh -c "pip install -q gradio requests &&
+             python app.py"
+    ports:
+      - "7860:7860"
+    restart: unless-stopped
+
+  nexus-nomad:
+    image: python:3.11-slim
+    working_dir: /workspace
+    env_file:
+      - .env
+    volumes:
+      - ./:/workspace
+      - ${NEXUS_DATA_HOST}:/data
+    command: >
+      sh -c "pip install -q -r requirements.txt &&
+             python scripts/nomad_controller.py --config configs/nomad_config.json"
+    restart: unless-stopped
+
+  nexus-backup:
+    image: python:3.11-slim
+    working_dir: /workspace
+    env_file:
+      - .env
+    volumes:
+      - ./:/workspace
+      - ${NEXUS_DATA_HOST}:/data
+    command: >
+      sh -c "pip install -q -r requirements.txt &&
+             python scripts/auto_backup.py"
+    restart: unless-stopped

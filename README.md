@@ -88,6 +88,43 @@ Oracle sniper:
 python scripts/oracle_sniper.py --once --dry-run
 ```
 
+## GitHub + Docker (para estabilidad y menos trabas)
+
+Objetivo:
+- Guardar estado continuamente en GitHub.
+- Ejecutar servicios pesados en contenedores.
+- Montar datos en `D:` para no llenar `C:`.
+
+Preparacion en Windows:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/docker_prepare.ps1
+```
+
+Si Docker no esta instalado:
+
+```powershell
+winget install -e --id Docker.DockerDesktop
+```
+
+Levantar stack:
+
+```powershell
+docker compose -f docker-compose.nexus.yml up -d
+```
+
+Detener stack:
+
+```powershell
+docker compose -f docker-compose.nexus.yml down
+```
+
+Snapshot manual a GitHub:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/github_snapshot.ps1 -Message "checkpoint antes de migracion"
+```
+
 Ops status (Windows):
 
 ```powershell
