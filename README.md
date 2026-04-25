@@ -9,6 +9,7 @@ Do not open or initialize repositories at `G:\` root. Google Drive may disappear
 - Open Antigravity and Codex on `C:\Nexus_Core`, not `G:\`.
 - Keep devcontainers remote through GitHub Codespaces.
 - Do not install or depend on local Docker on this 4 GB RAM machine unless there is a separate maintenance window.
+- Launch Antigravity in lite mode: local Docker, Python, Jupyter, Colab and duplicate ChatGPT extensions are disabled at boot; use cloud runners for that work.
 - Keep corpus exports and cold material in Google Drive cloud-only.
 - Run `scripts\nexus_remote_first_boot.ps1` after login or whenever Antigravity feels stuck.
 
