@@ -1,27 +1,52 @@
 {
-    "name": "Nexus Core",
-    "image": "mcr.microsoft.com/devcontainers/universal:2",
-    "features": {
-        "ghcr.io/devcontainers/features/node:1": {
-            "version": "20"
-        },
-        "ghcr.io/devcontainers/features/python:1": {
-            "version": "3.11"
-        },
-        "ghcr.io/devcontainers/features/github-cli:1": {}
+  "name": "NEXUS Remote Codespace",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
     },
-    "postCreateCommand": "bash .devcontainer/setup.sh",
-    "forwardPorts": [
-        5678,
-        8080,
-        8384
-    ],
-    "customizations": {
-        "vscode": {
-            "extensions": [
-                "ms-python.python",
-                "dbaeumer.vscode-eslint"
-            ]
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "hostRequirements": {
+    "cpus": 4,
+    "memory": "8gb",
+    "storage": "32gb"
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "editor.formatOnSave": true,
+        "files.autoSave": "afterDelay",
+        "search.followSymlinks": false,
+        "files.watcherExclude": {
+          "**/.git/objects/**": true,
+          "**/node_modules/**": true,
+          "**/Data_Exports/**": true,
+          "**/Takeout_Processing/**": true,
+          "**/Cloud_Storage/**": true
         }
+      },
+      "extensions": [
+        "ms-python.python",
+        "GitHub.vscode-github-actions",
+        "GitHub.copilot"
+      ]
     }
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "vscode",
+  "forwardPorts": [
+    8080,
+    8888
+  ],
+  "portsAttributes": {
+    "8080": {
+      "label": "NEXUS lightweight API",
+      "onAutoForward": "notify"
+    },
+    "8888": {
+      "label": "Remote notebooks",
+      "onAutoForward": "notify"
+    }
+  }
 }

@@ -1,0 +1,29 @@
+version: 2.1
+
+jobs:
+  remote_health:
+    docker:
+      - image: cimg/python:3.12-node
+    resource_class: small
+    steps:
+      - checkout
+      - run:
+          name: Remote health report
+          command: |
+            mkdir -p /tmp/nexus-artifacts
+            {
+              echo "# CircleCI Remote Health"
+              echo ""
+              echo "Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+              echo "Files: $(find . -type f -not -path './.git/*' | wc -l)"
+              echo "Markdown: $(find . -type f -name '*.md' -not -path './.git/*' | wc -l)"
+              echo "Python: $(python --version)"
+              echo "Node: $(node --version)"
+            } | tee /tmp/nexus-artifacts/circleci-health.md
+      - store_artifacts:
+          path: /tmp/nexus-artifacts
+
+workflows:
+  remote_health:
+    jobs:
+      - remote_health
