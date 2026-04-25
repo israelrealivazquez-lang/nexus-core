@@ -1,0 +1,26 @@
+{
+  "search.followSymlinks": false,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/Data_Exports/**": true,
+    "**/Takeout_Processing/**": true,
+    "**/Cloud_Storage/**": true,
+    "**/Credential_Vault/**": true,
+    "**/logs/**": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/Data_Exports": true,
+    "**/Takeout_Processing": true,
+    "**/Cloud_Storage": true,
+    "**/Credential_Vault": true,
+    "**/logs": true
+  },
+  "jupyter.jupyterServerType": "remote",
+  "git.autofetch": false,
+  "git.openRepositoryInParentFolders": "never",
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false
+}

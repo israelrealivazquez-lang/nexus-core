@@ -1,0 +1,8 @@
+pandas
+python-docx
+openpyxl
+tiktoken
+beautifulsoup4
+lxml
+requests
+pyyaml

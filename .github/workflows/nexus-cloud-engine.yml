@@ -1,0 +1,162 @@
+name: Nexus Remote Engine
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "Remote task to run"
+        required: true
+        type: choice
+        options:
+          - health-check
+          - process-data
+          - compile-thesis
+          - clean-artifacts
+      chapter_range:
+        description: "Chapter range label for thesis tasks"
+        required: false
+        default: "1-40"
+  schedule:
+    - cron: "0 6 * * 1"
+
+jobs:
+  health-check:
+    if: github.event.inputs.task == 'health-check' || github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Build health report
+        shell: bash
+        run: |
+          {
+            echo "# Nexus Health Report"
+            echo ""
+            echo "Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo "Commit: ${GITHUB_SHA}"
+            echo ""
+            echo "## Inventory"
+            echo "- Total files: $(find . -type f -not -path './.git/*' | wc -l)"
+            echo "- Markdown files: $(find . -type f -name '*.md' -not -path './.git/*' | wc -l)"
+            echo "- Scripts: $(find . -type f \( -name '*.ps1' -o -name '*.py' -o -name '*.js' -o -name '*.sh' \) -not -path './.git/*' | wc -l)"
+            echo "- Repository size: $(du -sh . | cut -f1)"
+          } | tee HEALTH_REPORT.md
+      - name: Upload health report
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-health-${{ github.run_number }}
+          path: HEALTH_REPORT.md
+          retention-days: 14
+
+  process-data:
+    if: github.event.inputs.task == 'process-data'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: python -m pip install -r requirements_cloud.txt
+      - name: Process repository text inventory
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, hashlib, datetime
+          exts = {".md", ".txt", ".json", ".yml", ".yaml", ".py", ".ps1", ".js"}
+          rows = []
+          for path in Path(".").rglob("*"):
+              if path.is_file() and ".git" not in path.parts and path.suffix.lower() in exts:
+                  data = path.read_bytes()
+                  text = data.decode("utf-8", errors="ignore")
+                  rows.append({
+                      "path": str(path),
+                      "bytes": len(data),
+                      "chars": len(text),
+                      "words": len(text.split()),
+                      "sha256": hashlib.sha256(data).hexdigest(),
+                  })
+          out = {
+              "generated": datetime.datetime.utcnow().isoformat() + "Z",
+              "files": len(rows),
+              "total_bytes": sum(r["bytes"] for r in rows),
+              "total_words": sum(r["words"] for r in rows),
+              "items": sorted(rows, key=lambda r: r["bytes"], reverse=True)[:500],
+          }
+          Path("REMOTE_TEXT_INVENTORY.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
+          Path("REMOTE_TEXT_INVENTORY.md").write_text(
+              "# Remote Text Inventory\n\n"
+              f"Files: {out['files']}\n\n"
+              f"Total words: {out['total_words']}\n\n"
+              f"Total bytes: {out['total_bytes']}\n",
+              encoding="utf-8",
+          )
+          print(json.dumps({k: out[k] for k in ["files", "total_bytes", "total_words"]}, indent=2))
+          PY
+      - name: Upload inventory
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-remote-inventory-${{ github.run_number }}
+          path: |
+            REMOTE_TEXT_INVENTORY.json
+            REMOTE_TEXT_INVENTORY.md
+          retention-days: 30
+
+  compile-thesis:
+    if: github.event.inputs.task == 'compile-thesis'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Install pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+      - name: Compile markdown chapters
+        shell: bash
+        run: |
+          mapfile -t chapters < <(find . -maxdepth 2 -type f \( -name 'thesis_chapter_*.md' -o -name 'TESIS_*.md' \) | sort)
+          if [ "${#chapters[@]}" -eq 0 ]; then
+            echo "No thesis markdown files found." > TESIS_COMPILE_STATUS.md
+            exit 0
+          fi
+          pandoc "${chapters[@]}" --from markdown --to docx --toc --toc-depth=3 --output "TESIS_NEXUS_COMPILED_${GITHUB_RUN_NUMBER}.docx"
+          printf "# Thesis Compile Status\n\nFiles compiled: %s\n" "${#chapters[@]}" > TESIS_COMPILE_STATUS.md
+      - name: Upload thesis artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-thesis-${{ github.run_number }}
+          path: |
+            TESIS_NEXUS_COMPILED_*.docx
+            TESIS_COMPILE_STATUS.md
+          retention-days: 30
+
+  clean-artifacts:
+    if: github.event.inputs.task == 'clean-artifacts'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Large file report
+        shell: bash
+        run: |
+          {
+            echo "# Large Files Report"
+            echo ""
+            find . -type f -size +1M -not -path './.git/*' -print0 | while IFS= read -r -d '' f; do
+              printf -- "- %s (%s)\n" "$f" "$(du -h "$f" | cut -f1)"
+            done
+          } | tee CLEANUP_REPORT.md
+      - name: Upload cleanup report
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-cleanup-${{ github.run_number }}
+          path: CLEANUP_REPORT.md
+          retention-days: 14
