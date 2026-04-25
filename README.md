@@ -29,6 +29,10 @@ Do not open or initialize repositories at `G:\` root. Google Drive may disappear
 ```
 
 ```powershell
+.\scripts\nexus_remote_first_boot.ps1 -LaunchAntigravity
+```
+
+```powershell
 .\scripts\nexus_cloud_dispatch.ps1 -Task health-check
 ```
 

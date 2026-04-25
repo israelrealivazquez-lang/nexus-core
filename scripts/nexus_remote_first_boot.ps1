@@ -1,6 +1,10 @@
 # NEXUS remote-first boot
 # Keeps the Lenovo light and routes heavy work to cloud services.
 
+param(
+  [switch]$LaunchAntigravity
+)
+
 $ErrorActionPreference = "SilentlyContinue"
 
 $Root = "C:\Nexus_Core"
@@ -95,7 +99,8 @@ if ($docker) {
   Write-NexusLog "Docker not installed locally: devcontainers must run in Codespaces"
 }
 
-if (Test-Path -LiteralPath $AntigravityExe) {
+$shouldLaunchAntigravity = $LaunchAntigravity -or ($env:NEXUS_LAUNCH_ANTIGRAVITY -eq "1")
+if ((Test-Path -LiteralPath $AntigravityExe) -and $shouldLaunchAntigravity) {
   $ag = Get-Process Antigravity -ErrorAction SilentlyContinue
   if (-not $ag) {
     Write-NexusLog "Starting Antigravity on $Root"
@@ -104,6 +109,8 @@ if (Test-Path -LiteralPath $AntigravityExe) {
     Write-NexusLog "Antigravity already running; requesting workspace $Root"
     Start-Process -FilePath $AntigravityExe -ArgumentList ($AntigravityLiteArgs + @("`"$Root`"")) -WindowStyle Normal
   }
+} elseif (Test-Path -LiteralPath $AntigravityExe) {
+  Write-NexusLog "Antigravity autostart skipped; run with -LaunchAntigravity when needed"
 }
 
 $freeRamAfter = [math]::Round((Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory / 1MB, 2)
