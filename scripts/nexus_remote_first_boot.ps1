@@ -9,6 +9,21 @@ $LogFile = Join-Path $LogDir "remote_first_boot.log"
 $AntigravityExe = "C:\Users\Lenovo\AppData\Local\Programs\Antigravity\Antigravity.exe"
 $DriveLaunch = "C:\Program Files\Google\Drive File Stream\launch.bat"
 $DriveStream = "C:\Users\Lenovo\Streaming de Google Drive\Mi unidad"
+$AntigravityLiteArgs = @(
+  "--disable-gpu",
+  "--disable-extension", "ms-azuretools.vscode-containers",
+  "--disable-extension", "ms-azuretools.vscode-docker",
+  "--disable-extension", "ms-python.python",
+  "--disable-extension", "ms-python.debugpy",
+  "--disable-extension", "ms-python.vscode-python-envs",
+  "--disable-extension", "ms-toolsai.jupyter",
+  "--disable-extension", "ms-toolsai.jupyter-keymap",
+  "--disable-extension", "ms-toolsai.jupyter-renderers",
+  "--disable-extension", "ms-toolsai.vscode-jupyter-cell-tags",
+  "--disable-extension", "ms-toolsai.vscode-jupyter-slideshow",
+  "--disable-extension", "google.colab",
+  "--disable-extension", "openai.chatgpt"
+)
 
 New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
 
@@ -84,10 +99,10 @@ if (Test-Path -LiteralPath $AntigravityExe) {
   $ag = Get-Process Antigravity -ErrorAction SilentlyContinue
   if (-not $ag) {
     Write-NexusLog "Starting Antigravity on $Root"
-    Start-Process -FilePath $AntigravityExe -ArgumentList "--disable-gpu `"$Root`"" -WindowStyle Normal
+    Start-Process -FilePath $AntigravityExe -ArgumentList ($AntigravityLiteArgs + @("`"$Root`"")) -WindowStyle Normal
   } else {
     Write-NexusLog "Antigravity already running; requesting workspace $Root"
-    Start-Process -FilePath $AntigravityExe -ArgumentList "`"$Root`"" -WindowStyle Normal
+    Start-Process -FilePath $AntigravityExe -ArgumentList ($AntigravityLiteArgs + @("`"$Root`"")) -WindowStyle Normal
   }
 }
 
