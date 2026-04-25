@@ -2,7 +2,7 @@
 # Runs cloud work without opening a browser or requiring local Docker.
 
 param(
-  [ValidateSet("health-check", "process-data", "compile-thesis", "clean-artifacts", "list-codespaces")]
+  [ValidateSet("health-check", "process-data", "compile-thesis", "clean-artifacts", "hf-job", "gcloud-health", "drive-index", "dashboard-publish", "list-codespaces")]
   [string]$Task = "health-check",
   [string]$Ref = "main",
   [string]$ChapterRange = "1-40",

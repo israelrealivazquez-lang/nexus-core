@@ -32,6 +32,14 @@ Do not open or initialize repositories at `G:\` root. Google Drive may disappear
 ```
 
 ```powershell
+.\scripts\nexus_control_plane.ps1 -Command full-health -RunRemote
+```
+
+```powershell
+.\scripts\nexus_control_plane.ps1 -Command repair-local -Aggressive
+```
+
+```powershell
 gh workflow run nexus-cloud-engine.yml --ref main -f task=health-check
 ```
 
@@ -49,3 +57,15 @@ gh codespace list --limit 10
 - Keep Git remotes clean, without tokens embedded in the URL.
 - Use GitHub CLI or Git Credential Manager for authentication.
 - Treat `Credential_Vault`, `Data_Exports`, `Takeout_Processing`, `Cloud_Storage` and logs as local/private material.
+
+## Control Plane
+
+`scripts\nexus_control_plane.ps1` is the single cockpit for the remote-first mesh:
+
+- `measure`: records RAM, CPU, disk, Drive, Docker, tools and top processes.
+- `repair-local`: trims memory and clears old temp files; `-Aggressive` also closes Antigravity helpers so they can relaunch cleanly.
+- `dispatch-github`: runs or lists GitHub Actions and Codespaces through `gh` keyring auth.
+- `dispatch-hf`: records the Hugging Face remote-job policy without installing local heavy tooling.
+- `dispatch-gcloud`: records local Google Cloud SDK auth/config status.
+- `drive-report`: makes a shallow Drive report without recursively downloading streamed files.
+- `full-health`: creates a complete evidence bundle under `logs\control_plane`.

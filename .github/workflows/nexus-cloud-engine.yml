@@ -12,6 +12,10 @@ on:
           - process-data
           - compile-thesis
           - clean-artifacts
+          - hf-job
+          - gcloud-health
+          - drive-index
+          - dashboard-publish
       chapter_range:
         description: "Chapter range label for thesis tasks"
         required: false
@@ -160,3 +164,175 @@ jobs:
           name: nexus-cleanup-${{ github.run_number }}
           path: CLEANUP_REPORT.md
           retention-days: 14
+
+  hf-job:
+    if: github.event.inputs.task == 'hf-job'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build Hugging Face job handoff
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json, datetime, os
+          report = {
+              "generated": datetime.datetime.utcnow().isoformat() + "Z",
+              "runner": "github-actions",
+              "policy": "Use HF Jobs or Spaces for corpus NLP, embeddings and batch parsing. Do not install heavy HF tooling on Lenovo by default.",
+              "hf_token_configured": bool(os.environ.get("HF_TOKEN")),
+              "suggested_jobs": [
+                  "corpus text inventory",
+                  "embedding generation",
+                  "conversation reconstruction",
+                  "thesis/source cross-reference extraction",
+              ],
+          }
+          Path("HF_JOB_HANDOFF.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+          Path("HF_JOB_HANDOFF.md").write_text(
+              "# Hugging Face Remote Job Handoff\n\n"
+              f"Generated: {report['generated']}\n\n"
+              f"HF token configured in this runner: {report['hf_token_configured']}\n\n"
+              "Heavy NLP should run on Hugging Face Jobs/Spaces or another remote runner, not on the Lenovo.\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(report, indent=2))
+          PY
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      - name: Upload Hugging Face handoff
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-hf-handoff-${{ github.run_number }}
+          path: |
+            HF_JOB_HANDOFF.json
+            HF_JOB_HANDOFF.md
+          retention-days: 30
+
+  gcloud-health:
+    if: github.event.inputs.task == 'gcloud-health'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Build Google Cloud health report
+        shell: bash
+        run: |
+          {
+            echo "# Google Cloud Remote Health"
+            echo ""
+            echo "Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo ""
+            echo "## Runner"
+            uname -a
+            echo ""
+            echo "## Local policy"
+            echo "Use local gcloud/gsutil only as a control surface. Heavy GCP work belongs in Cloud Shell, GCE, or GitHub Actions."
+            echo ""
+            echo "## CLI availability"
+            if command -v gcloud >/dev/null 2>&1; then
+              gcloud --version
+            else
+              echo "gcloud is not preinstalled on this runner."
+            fi
+          } | tee GCLOUD_HEALTH.md
+      - name: Upload Google Cloud health
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-gcloud-health-${{ github.run_number }}
+          path: GCLOUD_HEALTH.md
+          retention-days: 14
+
+  drive-index:
+    if: github.event.inputs.task == 'drive-index'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Build Drive staging report
+        shell: bash
+        run: |
+          {
+            echo "# Drive / Offload Index"
+            echo ""
+            echo "Generated: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            echo ""
+            echo "This remote job only indexes repository-side staging metadata."
+            echo "Google Drive streaming folders stay local/cloud-only and should not be recursively downloaded by Actions."
+            echo ""
+            echo "## Candidate paths"
+            for p in Drive_Staging Cloud_Storage Data_Exports Takeout_Processing; do
+              if [ -e "$p" ]; then
+                echo "- $p exists in repository checkout"
+                find "$p" -maxdepth 2 -type f | sed 's#^#  - #' | head -100
+              else
+                echo "- $p not present in repository checkout"
+              fi
+            done
+          } | tee DRIVE_INDEX.md
+      - name: Upload Drive index
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-drive-index-${{ github.run_number }}
+          path: DRIVE_INDEX.md
+          retention-days: 14
+
+  dashboard-publish:
+    if: github.event.inputs.task == 'dashboard-publish'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Build static control dashboard
+        shell: bash
+        run: |
+          mkdir -p dashboard
+          cat > dashboard/index.html <<'HTML'
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>NEXUS Remote-First Dashboard</title>
+            <style>
+              body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; margin: 2rem; background: #f7f4ed; color: #17201a; }
+              main { max-width: 900px; margin: auto; }
+              .card { background: white; border: 1px solid #ddd4c7; border-radius: 18px; padding: 1.2rem; margin: 1rem 0; box-shadow: 0 8px 30px rgba(33, 28, 19, .08); }
+              code { background: #eee6d8; padding: .12rem .35rem; border-radius: 6px; }
+            </style>
+          </head>
+          <body>
+            <main>
+              <h1>NEXUS Remote-First Dashboard</h1>
+              <section class="card">
+                <h2>Policy</h2>
+                <p>The Lenovo is the control cockpit. Heavy work runs on Codespaces, Actions, CircleCI, Colab, Hugging Face, Google Cloud, Firebase, Cloudflare or Netlify.</p>
+              </section>
+              <section class="card">
+                <h2>Local Commands</h2>
+                <p><code>scripts\nexus_control_plane.ps1 -Command full-health -RunRemote</code></p>
+                <p><code>scripts\nexus_control_plane.ps1 -Command repair-local -Aggressive</code></p>
+              </section>
+              <section class="card">
+                <h2>Generated</h2>
+                <p>Built by GitHub Actions.</p>
+              </section>
+            </main>
+          </body>
+          </html>
+          HTML
+      - name: Upload dashboard
+        uses: actions/upload-artifact@v7
+        with:
+          name: nexus-dashboard-${{ github.run_number }}
+          path: dashboard
+          retention-days: 30
